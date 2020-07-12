@@ -1,6 +1,6 @@
 from gensim.models import Word2Vec
 import numpy as np
-
+from tqdm import tqdm
 
 class DeepWalk:
     def __init__(self, G, id2idx, num_walks=10, walk_len=10, window_size=5, \
@@ -53,14 +53,14 @@ class DeepWalk:
     def run_random_walks(self):
         print("Random walk process")
         walks = []
-        for i in range(self.num_walks):
+        for i in tqdm(range(self.num_walks)):
             for count, node in enumerate(self.G.nodes()):
                 walk = [str(self.id2idx[node])]
                 if self.G.degree(node) == 0:
                     continue
                 curr_node = node
                 for _ in range(self.walk_len):
-                    next_node = np.random.choice(self.G.neighbors(curr_node))
+                    next_node = np.random.choice([ele for ele in self.G.neighbors(curr_node)])
                     curr_node = next_node
                     if curr_node != node:
                         walk.append(str(self.id2idx[curr_node]))

@@ -363,7 +363,6 @@ class NAWAL(NetworkAlignmentModel):
         self.log()
     
     def log(self):
-        print("PALE_ACC {}".format(self.pale_acc))
         print("NAWAL_BEFORE_REFINING {}".format(self.nawal_before_refine_acc))
         print("NAWAL_AFTER_REFINING {}".format(self.nawal_after_refine_acc))
 
