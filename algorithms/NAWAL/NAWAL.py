@@ -41,9 +41,9 @@ class NAWAL(NetworkAlignmentModel):
         self.args = args
 
         # pale_mapping_params
-        self.pale_train_anchors = load_gt(args.train_dict, source_dataset.id2idx, target_dataset.id2idx, 'dict')
-        self.nawal_test_anchors = load_gt(args.test_dict, source_dataset.id2idx, target_dataset.id2idx, 'dict')
-        self.source_train_nodes = np.array(list(self.pale_train_anchors.keys()))
+        # self.pale_train_anchors = load_gt(args.train_dict, source_dataset.id2idx, target_dataset.id2idx, 'dict')
+        # self.nawal_test_anchors = load_gt(args.test_dict, source_dataset.id2idx, target_dataset.id2idx, 'dict')
+        # self.source_train_nodes = np.array(list(self.pale_train_anchors.keys()))
 
         # nawal_mapping_params
         self.decrease_lr = False
@@ -355,53 +355,53 @@ class NAWAL(NetworkAlignmentModel):
             W.copy_((1 + beta) * W - beta * W.mm(W.transpose(0, 1).mm(W)))
 
 
-    def pale_mapping(self):
-        mapping_model = PaleMappingLinear(
-                                    embedding_dim=self.args.embedding_dim,
-                                    source_embedding=self.source_embedding,
-                                    target_embedding=self.target_embedding,
-                                    )
-        if self.args.cuda:
-            mapping_model = mapping_model.cuda()
+    # def pale_mapping(self):
+    #     mapping_model = PaleMappingLinear(
+    #                                 embedding_dim=self.args.embedding_dim,
+    #                                 source_embedding=self.source_embedding,
+    #                                 target_embedding=self.target_embedding,
+    #                                 )
+    #     if self.args.cuda:
+    #         mapping_model = mapping_model.cuda()
 
-        mapping_model.train()
+    #     mapping_model.train()
 
-        optimizer = torch.optim.Adam(filter(lambda p : p.requires_grad, mapping_model.parameters()), lr=self.args.pale_map_lr)
-        n_iters = len(self.source_train_nodes) // self.args.pale_map_batchsize
-        assert n_iters > 0, "batch_size is too large"
-        if(len(self.source_train_nodes) % self.args.pale_map_batchsize > 0):
-            n_iters += 1
-        print_every = int(n_iters/4) + 1
-        total_steps = 0
-        n_epochs = self.args.pale_map_epochs
-        for epoch in range(1, n_epochs + 1):
-            # for time evaluate
-            start = time.time()
-            print('Epochs: ', epoch)
-            np.random.shuffle(self.source_train_nodes)
-            for iter in range(n_iters):
-                source_batch = self.source_train_nodes[iter*self.args.pale_map_batchsize:(iter+1)*self.args.pale_map_batchsize]
-                target_batch = [self.pale_train_anchors[x] for x in source_batch]
-                source_batch = torch.LongTensor(source_batch)
-                target_batch = torch.LongTensor(target_batch)
-                if self.args.cuda:
-                    source_batch = source_batch.cuda()
-                    target_batch = target_batch.cuda()
-                optimizer.zero_grad()
-                start_time = time.time()
-                loss = mapping_model.loss(source_batch, target_batch)
-                loss.backward()
-                optimizer.step()
+    #     optimizer = torch.optim.Adam(filter(lambda p : p.requires_grad, mapping_model.parameters()), lr=self.args.pale_map_lr)
+    #     n_iters = len(self.source_train_nodes) // self.args.pale_map_batchsize
+    #     assert n_iters > 0, "batch_size is too large"
+    #     if(len(self.source_train_nodes) % self.args.pale_map_batchsize > 0):
+    #         n_iters += 1
+    #     print_every = int(n_iters/4) + 1
+    #     total_steps = 0
+    #     n_epochs = self.args.pale_map_epochs
+    #     for epoch in range(1, n_epochs + 1):
+    #         # for time evaluate
+    #         start = time.time()
+    #         print('Epochs: ', epoch)
+    #         np.random.shuffle(self.source_train_nodes)
+    #         for iter in range(n_iters):
+    #             source_batch = self.source_train_nodes[iter*self.args.pale_map_batchsize:(iter+1)*self.args.pale_map_batchsize]
+    #             target_batch = [self.pale_train_anchors[x] for x in source_batch]
+    #             source_batch = torch.LongTensor(source_batch)
+    #             target_batch = torch.LongTensor(target_batch)
+    #             if self.args.cuda:
+    #                 source_batch = source_batch.cuda()
+    #                 target_batch = target_batch.cuda()
+    #             optimizer.zero_grad()
+    #             start_time = time.time()
+    #             loss = mapping_model.loss(source_batch, target_batch)
+    #             loss.backward()
+    #             optimizer.step()
                 
-                if total_steps % print_every == 0 and total_steps > 0:
-                    print("PALE_MAPPING: Iter:", '%03d' %iter,
-                          "train_loss=", "{:.5f}".format(loss.item()),
-                          "time", "{:.5f}".format(time.time()-start_time)
-                          )
+    #             if total_steps % print_every == 0 and total_steps > 0:
+    #                 print("PALE_MAPPING: Iter:", '%03d' %iter,
+    #                       "train_loss=", "{:.5f}".format(loss.item()),
+    #                       "time", "{:.5f}".format(time.time()-start_time)
+    #                       )
                 
-                total_steps += 1
-            self.mapping_epoch_time = time.time() - start
-        return mapping_model
+    #             total_steps += 1
+    #         self.mapping_epoch_time = time.time() - start
+    #     return mapping_model
 
     def learn_embeddings(self):
         num_source_nodes = len(self.source_dataset.G.nodes())
