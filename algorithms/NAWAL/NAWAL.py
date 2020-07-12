@@ -75,11 +75,11 @@ class NAWAL(NetworkAlignmentModel):
         else:
             self.learn_embeddings()
 
-            if self.args.save_emb:
-                to_word2vec_format(self.source_embedding, self.source_dataset.G.nodes(), 'algorithms/NAWAL/embeddings', self.args.embedding_name + "_source", \
-                    self.args.embedding_dim, self.source_dataset.id2idx)
-                to_word2vec_format(self.target_embedding, self.target_dataset.G.nodes(), 'algorithms/NAWAL/embeddings', self.args.embedding_name + "_target", \
-                    self.args.embedding_dim, self.target_dataset.id2idx)
+            # if self.args.save_emb:
+            to_word2vec_format(self.source_embedding, self.source_dataset.G.nodes(), 'algorithms/NAWAL/embeddings', self.args.embedding_name + "_source", \
+                self.args.embedding_dim, self.source_dataset.id2idx)
+            to_word2vec_format(self.target_embedding, self.target_dataset.G.nodes(), 'algorithms/NAWAL/embeddings', self.args.embedding_name + "_target", \
+                self.args.embedding_dim, self.target_dataset.id2idx)
 
 
         #pale_mapping_model = self.pale_mapping().eval()
