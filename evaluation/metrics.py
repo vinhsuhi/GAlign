@@ -23,19 +23,10 @@ def get_statistics(alignment_matrix, groundtruth, groundtruth_matrix=None, use_g
     if get_all_metric:
         MAP, Hit, AUC  = compute_MAP_Hit_AUC(alignment_matrix, groundtruth)
         pred_top_5 = top_k(alignment_matrix, 5)
-        precision_5 = compute_precision_k(pred_top_5, groundtruth)
+        top5 = compute_precision_k(pred_top_5, groundtruth)
         pred_top_10 = top_k(alignment_matrix, 10)
-        precision_10 = compute_precision_k(pred_top_10, groundtruth)
-        pred_top_20 = top_k(alignment_matrix, 20)
-        precision_20 = compute_precision_k(pred_top_20, groundtruth)
-        pred_top_30 = top_k(alignment_matrix, 30)
-        precision_30 = compute_precision_k(pred_top_30, groundtruth)
-        pred_top_50 = top_k(alignment_matrix, 50)
-        precision_50 = compute_precision_k(pred_top_50, groundtruth)
-        pred_top_100 = top_k(alignment_matrix, 100)
-        precision_100 = compute_precision_k(pred_top_100, groundtruth)
-
-        return acc, MAP, Hit, AUC, precision_5, precision_10, precision_20, precision_30, precision_50, precision_100
+        top10 = compute_precision_k(pred_top_10, groundtruth)
+        return acc, MAP, top5, top10
     return acc
 
 def compute_precision_k(top_k_matrix, gt):
