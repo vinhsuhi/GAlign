@@ -16,6 +16,7 @@ import numpy as np
 import argparse
 import os
 import time
+from algorithms.DeepLink.embedding_model import DeepWalk
 
 
 
@@ -65,6 +66,23 @@ class NAWAL(NetworkAlignmentModel):
     def get_target_embedding(self):
         return self.target_embedding
 
+    def learn_UAGA(self):
+        print("Start embedding for source nodes, using deepwalk")
+
+        source_embedding_model = DeepWalk(self.source_dataset.G, self.source_dataset.id2idx, 100, \
+                        5, 2, 200, 16, 5, seed = 1)
+
+        self.source_embedding = torch.Tensor(source_embedding_model.get_embedding())
+        print("Start embedding for target nodes, using deepwalk")
+
+        target_embedding_model = DeepWalk(self.target_dataset.G, self.target_dataset.id2idx, 100, \
+                        5, 2, 200, 16, 5, seed = 1)
+
+        self.target_embedding = torch.Tensor(target_embedding_model.get_embedding())
+        if self.args.cuda:
+            self.source_embedding = self.source_embedding.cuda()
+            self.target_embedding = self.target_embedding.cuda()
+
 
     def align(self):
         if self.args.load_emb:
@@ -73,7 +91,10 @@ class NAWAL(NetworkAlignmentModel):
             self.target_embedding = read_embedding_from_file(self.target_dataset.id2idx, \
                 "algorithms/NAWAL/embeddings/{}_target".format(self.args.embedding_name), self.args.embedding_dim, self.args.cuda)
         else:
-            self.learn_embeddings()
+            if self.args.UAGA_mode:
+                self.learn_UAGA()
+            else:
+                self.learn_embeddings()
 
             """
             # if self.args.save_emb:

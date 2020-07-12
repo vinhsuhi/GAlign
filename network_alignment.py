@@ -53,6 +53,7 @@ def parse_args():
     parser_nawal.add_argument('--neg_sample_size', type=int, default=10)
     parser_nawal.add_argument('--batch_size_embedding', type=int, default=1024)
     parser_nawal.add_argument('--embedding_epochs', type=int, default=500)
+    parser_nawal.add_argument('--UAGA_mode', action='store_true')
     parser_nawal.add_argument('--cuda', action='store_true')
 
 
