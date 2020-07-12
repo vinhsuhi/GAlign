@@ -82,15 +82,15 @@ class NAWAL(NetworkAlignmentModel):
                     self.args.embedding_dim, self.target_dataset.id2idx)
 
 
-        pale_mapping_model = self.pale_mapping().eval()
-        self.S_pale = self.calculate_simi_matrix(pale_mapping_model)
-        groundtruth_matrix_pale = load_gt(self.args.groundtruth, self.source_dataset.id2idx, self.target_dataset.id2idx)
-        groundtruth_dict_pale = load_gt(self.args.groundtruth, self.source_dataset.id2idx, self.target_dataset.id2idx, 'dict')
-        self.pale_acc = get_statistics(self.S_pale, groundtruth_dict_pale, groundtruth_matrix_pale)
-        print("Accuracy: {}".format(acc))
+        #pale_mapping_model = self.pale_mapping().eval()
+        #self.S_pale = self.calculate_simi_matrix(pale_mapping_model)
+        #groundtruth_matrix_pale = load_gt(self.args.groundtruth, self.source_dataset.id2idx, self.target_dataset.id2idx)
+        #groundtruth_dict_pale = load_gt(self.args.groundtruth, self.source_dataset.id2idx, self.target_dataset.id2idx, 'dict')
+        #self.pale_acc = get_statistics(self.S_pale, groundtruth_dict_pale, groundtruth_matrix_pale)
+        #print("Accuracy: {}".format(self.pale_acc))
 
         self.nawal_mapping()
-        return self.S_pale
+        return self.S
 
     def procrustes(self, dico):
         """

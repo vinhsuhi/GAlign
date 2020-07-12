@@ -38,6 +38,7 @@ def parse_args():
     parser_nawal.add_argument('--dis_layers', type=int, default=2)
     parser_nawal.add_argument('--dis_dropout', type=float, default=0.)
     parser_nawal.add_argument('--dis_input_dropout', type=float, default=0.1)
+    parser_nawal.add_argument('--emb_lr', type=float, default=0.01)
     parser_nawal.add_argument('--map_optimizer', type=str, default="sgd,lr=0.1")
     parser_nawal.add_argument('--dis_optimizer', type=str, default="sgd,lr=0.1")
     parser_nawal.add_argument('--nawal_mapping_epochs', type=int, default=5)
@@ -45,11 +46,13 @@ def parse_args():
     parser_nawal.add_argument('--test_dict', type=str)
     parser_nawal.add_argument('--train_dict', type=str)
     parser_nawal.add_argument('--map_beta', type=float, default=0.001)
-    parser_nawal.add_argument('--pale_map_batchsize', type=int)
-    parser_nawal.add_argument('--pale_map_epochs', type=int)
-    parser_nawal.add_argument('--neg_sample_size', type=int)
-    parser_nawal.add_argument('--batch_size_embedding', type=int)
-    parser_nawal.add_argument('--embedding_epochs', type=int)
+    parser_nawal.add_argument('--pale_map_batchsize', type=int, default=512)
+    parser_nawal.add_argument('--pale_map_epochs', type=int, default=500)
+    parser_nawal.add_argument('--pale_map_lr', type=float, default=0.01)
+    parser_nawal.add_argument('--dis_steps', type=int, default=5)
+    parser_nawal.add_argument('--neg_sample_size', type=int, default=10)
+    parser_nawal.add_argument('--batch_size_embedding', type=int, default=1024)
+    parser_nawal.add_argument('--embedding_epochs', type=int, default=500)
     parser_nawal.add_argument('--cuda', action='store_true')
 
 
@@ -238,7 +241,7 @@ if __name__ == '__main__':
     elif algorithm == "CENALP":
         model = CENALP(source_dataset, target_dataset, args)
     elif algorithm == "NAWAL":
-        model = CENALP(source_dataset, target_dataset, args)
+        model = NAWAL(source_dataset, target_dataset, args)
     else:
         raise Exception("Unsupported algorithm")
 
