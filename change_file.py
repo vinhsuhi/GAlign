@@ -31,5 +31,5 @@ if __name__ == "__main__":
     args = parse_args()
     print(args)
     result = (chain.from_iterable(glob(os.path.join(x[0], '*edgelist*')) for x in os.walk(args.desti)))
-    result = [ele for ele in result if os.path.isfile(ele)]
+    result = [ele for ele in result if os.path.isfile(ele) and '.npy' not in ele]
     print(result)
