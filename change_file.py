@@ -22,6 +22,8 @@ def change_content(path):
             for ele in data_line:
                 if '_' in ele:
                     new_data.append(ele.split('_')[-1])
+                else:
+                    new_data.append(ele)
             new_line = "\t".join(new_data) + "\n"
             file.write(new_line)
     file.close()
@@ -32,4 +34,6 @@ if __name__ == "__main__":
     print(args)
     result = (chain.from_iterable(glob(os.path.join(x[0], '*edgelist*')) for x in os.walk(args.desti)))
     result = [ele for ele in result if os.path.isfile(ele) and '.npy' not in ele]
+    for ele in result:
+        change_content(ele)
     print(result)
