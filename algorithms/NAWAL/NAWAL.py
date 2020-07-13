@@ -69,14 +69,14 @@ class NAWAL(NetworkAlignmentModel):
     def learn_UAGA(self):
         print("Start embedding for source nodes, using deepwalk")
 
-        source_embedding_model = DeepWalk(self.source_dataset.G, self.source_dataset.id2idx, 100, \
-                        5, 2, 200, 16, 5, seed = 1)
+        source_embedding_model = DeepWalk(self.source_dataset.G, self.source_dataset.id2idx, 80, \
+                        40, 5, 32, 16, 5, seed = 1)
 
         self.source_embedding = torch.Tensor(source_embedding_model.get_embedding())
         print("Start embedding for target nodes, using deepwalk")
 
-        target_embedding_model = DeepWalk(self.target_dataset.G, self.target_dataset.id2idx, 100, \
-                        5, 2, 200, 16, 5, seed = 1)
+        target_embedding_model = DeepWalk(self.target_dataset.G, self.target_dataset.id2idx, 80, \
+                        40, 5, 32, 16, 5, seed = 1)
 
         self.target_embedding = torch.Tensor(target_embedding_model.get_embedding())
         if self.args.cuda:
