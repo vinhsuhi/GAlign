@@ -57,6 +57,7 @@ class DeepWalk:
             for count, node in enumerate(self.G.nodes()):
                 walk = [str(self.id2idx[node])]
                 if self.G.degree(node) == 0:
+                    walks.append(walk)
                     continue
                 curr_node = node
                 for _ in range(self.walk_len):
