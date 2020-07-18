@@ -55,6 +55,16 @@ def parse_args():
     parser_nawal.add_argument('--embedding_epochs', type=int, default=500)
     parser_nawal.add_argument('--UAGA_mode', action='store_true')
     parser_nawal.add_argument('--cuda', action='store_true')
+    parser_nawal.add_argument('--hidden_dim1',         default=1200, type=int)
+    parser_nawal.add_argument('--hidden_dim2',         default=1600, type=int)
+    parser_nawal.add_argument('--mapper', type=str, default="nawal", help="Choose the mapper which is one of ('nawal', 'mlp', 'linear', 'deeplink'")
+    parser_nawal.add_argument('--unsupervised_lr',     default=0.007, type=float)
+    parser_nawal.add_argument('--supervised_lr',       default=0.007, type=float)
+    parser_nawal.add_argument('--batch_size_mapping', default=200)
+    parser_nawal.add_argument('--unsupervised_epochs', default=500, type=int)
+    parser_nawal.add_argument('--supervised_epochs',   default=500,         type=int)
+    parser_nawal.add_argument('--alpha',               default=0.8, type=float)
+    parser_nawal.add_argument('--top_k',               default=5, type=int)
 
 
 
@@ -246,13 +256,25 @@ if __name__ == '__main__':
     else:
         raise Exception("Unsupported algorithm")
 
+    if args.mapper == "all":
+        s_deep, s_linear, s_mlp = model.align()
+        Simis = [s_deep, s_linear, s_mlp]
+        for i, ele in enumerate(['Deep', 'Linear', "MLP"]):
+            acc, MAP, top5, top10 = get_statistics(Simis[i], groundtruth, use_greedy_match=True, get_all_metric=True)
+            print("{} Accuracy: {:.4f}".format(ele, acc))
+            print("{} MAP: {:.4f}".format(ele, MAP))
+            print("{} Precision_5: {:.4f}".format(ele, top5))
+            print("{} Precision_10: {:.4f}".format(ele, top10))
+            print("-"*100)
 
-    S = model.align()
-    print("-"*100)
-    acc, MAP, top5, top10 = get_statistics(S, groundtruth, use_greedy_match=True, get_all_metric=True)
-    print("Accuracy: {:.4f}".format(acc))
-    print("MAP: {:.4f}".format(MAP))
-    print("Precision_5: {:.4f}".format(top5))
-    print("Precision_10: {:.4f}".format(top10))
-    print("-"*100)
+    else:
+        S = model.align()
+        print("-"*100)
+        acc, MAP, top5, top10 = get_statistics(S, groundtruth, use_greedy_match=True, get_all_metric=True)
+        print("Accuracy: {:.4f}".format(acc))
+        print("MAP: {:.4f}".format(MAP))
+        print("Precision_5: {:.4f}".format(top5))
+        print("Precision_10: {:.4f}".format(top10))
+        print("-"*100)
+    
     print('Running time: {}'.format(time()-start_time))

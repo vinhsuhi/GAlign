@@ -1,6 +1,6 @@
 from algorithms.network_alignment_model import NetworkAlignmentModel
 from algorithms.NAWAL.embedding_model import PaleEmbedding
-from algorithms.NAWAL.mapping_models import PaleMappingLinear, Discriminator, Mapping, EncoderLinear, EncoderMLP, DecoderLinear, DecoderMLP
+from algorithms.map_architechtures import PaleMappingLinear, Discriminator, Mapping, EncoderLinear, EncoderMLP, DecoderLinear, DecoderMLP, PaleMappingMlp, MappingModel
 from evaluation.metrics import get_statistics
 
 from input.dataset import Dataset
@@ -41,10 +41,11 @@ class NAWAL(NetworkAlignmentModel):
         # embedding_params
         self.args = args
 
-        # pale_mapping_params
-        # self.pale_train_anchors = load_gt(args.train_dict, source_dataset.id2idx, target_dataset.id2idx, 'dict')
-        # self.nawal_test_anchors = load_gt(args.test_dict, source_dataset.id2idx, target_dataset.id2idx, 'dict')
-        # self.source_train_nodes = np.array(list(self.pale_train_anchors.keys()))
+        self.pale_train_anchors = load_gt(args.train_dict, source_dataset.id2idx, target_dataset.id2idx, 'dict')
+        self.train_dict = self.pale_train_anchors
+        self.nawal_test_anchors = load_gt(args.test_dict, source_dataset.id2idx, target_dataset.id2idx, 'dict')
+        self.test_dict = self.nawal_test_anchors
+        self.source_train_nodes = np.array(list(self.pale_train_anchors.keys()))
 
         # nawal_mapping_params
         self.decrease_lr = False
@@ -95,25 +96,91 @@ class NAWAL(NetworkAlignmentModel):
                 self.learn_UAGA()
             else:
                 self.learn_embeddings()
+        
+        if self.args.mapper == "nawal":
+            self.S = self.nawal_mapping()
+        elif self.args.mapper == "deeplink":
+            self.S = self.deeplink_mapping()
+        elif self.args.mapper == "linear":
+            self.S = self.pale_mapping('linear')
+        elif self.args.mapper == "mlp":
+            self.S = self.pale_mapping('mlp')
+        else:
+            s_deep = self.deeplink_mapping()
+            s_linear = self.pale_mapping('linear')
+            s_mlp = self.pale_mapping('mlp')
+            return s_deep, s_linear, s_mlp
 
-            """
-            # if self.args.save_emb:
-            to_word2vec_format(self.source_embedding, self.source_dataset.G.nodes(), 'algorithms/NAWAL/embeddings', self.args.embedding_name + "_source", \
-                self.args.embedding_dim, self.source_dataset.id2idx)
-            to_word2vec_format(self.target_embedding, self.target_dataset.G.nodes(), 'algorithms/NAWAL/embeddings', self.args.embedding_name + "_target", \
-                self.args.embedding_dim, self.target_dataset.id2idx)
-            """
-
-
-        #pale_mapping_model = self.pale_mapping().eval()
-        #self.S_pale = self.calculate_simi_matrix(pale_mapping_model)
-        #groundtruth_matrix_pale = load_gt(self.args.groundtruth, self.source_dataset.id2idx, self.target_dataset.id2idx)
-        #groundtruth_dict_pale = load_gt(self.args.groundtruth, self.source_dataset.id2idx, self.target_dataset.id2idx, 'dict')
-        #self.pale_acc = get_statistics(self.S_pale, groundtruth_dict_pale, groundtruth_matrix_pale)
-        #print("Accuracy: {}".format(self.pale_acc))
-
-        self.nawal_mapping()
         return self.S
+
+
+    def deeplink_mapping(self):
+        mapping_model = MappingModel(
+                                embedding_dim=self.args.embedding_dim,
+                                hidden_dim1=self.args.hidden_dim1,
+                                hidden_dim2=self.args.hidden_dim2,
+                                source_embedding=self.source_embedding,
+                                target_embedding=self.target_embedding
+                                )
+        
+        if self.args.cuda:
+            mapping_model = mapping_model.cuda()
+        
+        print("Start Unsupervised mapping")
+        m_optimizer_us = torch.optim.SGD(filter(lambda p: p.requires_grad, mapping_model.parameters()), lr = self.args.unsupervised_lr)
+        print("Start Supervised mapping")
+        self.mapping_train_(mapping_model, m_optimizer_us, 'us')
+
+        m_optimizer_s = torch.optim.SGD(filter(lambda p: p.requires_grad, mapping_model.parameters()), lr = self.args.supervised_lr)
+        self.mapping_train_(mapping_model, m_optimizer_s, 's')
+        self.source_after_mapping = mapping_model(self.source_embedding, 'val')
+        S = torch.matmul(self.source_after_mapping, self.target_embedding.t())
+
+        S = S.detach().cpu().numpy()
+        return S
+
+
+    def mapping_train_(self, model, optimizer, mode='s'):
+        source_train_nodes = self.source_train_nodes
+
+        batch_size = self.args.batch_size_mapping
+        n_iters = len(source_train_nodes)//batch_size
+        assert n_iters > 0, "batch_size is too large"
+        if(len(source_train_nodes) % batch_size > 0):
+            n_iters += 1
+        print_every = int(n_iters/4) + 1
+        total_steps = 0
+        train_dict = self.train_dict
+        if mode == 's':
+            n_epochs = self.args.supervised_epochs
+        else:
+            n_epochs = self.args.unsupervised_epochs
+
+        for epoch in range(1, n_epochs+1):
+            print("Epoch {0}".format(epoch))
+            np.random.shuffle(source_train_nodes)
+            for iter in range(n_iters):
+                source_batch = source_train_nodes[iter*batch_size:(iter+1)*batch_size]
+                target_batch = [train_dict[x] for x in source_batch]
+                source_batch = torch.LongTensor(source_batch)
+                target_batch = torch.LongTensor(target_batch)
+                if self.args.cuda:
+                    source_batch = source_batch.cuda()
+                    target_batch = target_batch.cuda()
+                optimizer.zero_grad()
+                if mode == 'us':
+                    loss = model.unsupervised_loss(source_batch, target_batch)
+                else:
+                    loss = model.supervised_loss(source_batch, target_batch, alpha=self.args.alpha, k=self.args.top_k)
+                loss.backward()
+                optimizer.step()
+                if total_steps % print_every == 0 and total_steps > 0:
+                    print("Iter:", '%03d' %iter,
+                          "train_loss=", "{:.4f}".format(loss.item()),
+                          "Mode {}".format(mode)
+                          )
+                total_steps += 1
+
 
     def procrustes(self, dico):
         """
@@ -126,7 +193,8 @@ class NAWAL(NetworkAlignmentModel):
         M = B.transpose(0, 1).mm(A).cpu().numpy()
         U, _, V_t = scipy.linalg.svd(M, full_matrices=True)
         W.copy_(torch.from_numpy(U.dot(V_t)).type_as(W))
-    
+
+
     def save_best(self):
         """
         Save the best model for the given validation metric.
@@ -141,7 +209,6 @@ class NAWAL(NetworkAlignmentModel):
             #print("Mean cosine is smaller than the best: {} < {}".format(self.mean_cosine, self.best_valid_metric))
             pass
         
-
     
     def dist_mean_cosine(self):
         """
@@ -162,7 +229,6 @@ class NAWAL(NetworkAlignmentModel):
         return self.mean_cosine
 
 
-
     def reload_best(self):
         """
         Reload the best mapping.
@@ -179,6 +245,7 @@ class NAWAL(NetworkAlignmentModel):
         S = torch.matmul(source_after_mapping, self.target_embedding.t())
         S = S.detach().cpu().numpy()
         return S       
+
 
     def get_dis_xy(self, volatile):
         """
@@ -212,6 +279,7 @@ class NAWAL(NetworkAlignmentModel):
         if self.args.cuda:
             y = y.cuda()
         return x, y
+
 
     def dis_step(self, stats):
         """
@@ -260,6 +328,7 @@ class NAWAL(NetworkAlignmentModel):
 
         return 2 * self.args.nawal_mapping_batch_size
 
+
     def update_lr(self):
         """
         Update learning rate when using SGD.
@@ -275,7 +344,6 @@ class NAWAL(NetworkAlignmentModel):
                     old_lr = self.map_optimizer.param_groups[0]['lr']
                     self.map_optimizer.param_groups[0]['lr'] *= self.args.lr_shrink
                 self.decrease_lr = True
-
 
 
     def nawal_mapping(self):
@@ -353,15 +421,15 @@ class NAWAL(NetworkAlignmentModel):
 
         self.reload_best()
         
-        self.S = self.calculate_simi_matrix(self.mapping.eval(), save=True)
+        S = self.calculate_simi_matrix(self.mapping.eval(), save=True)
         # print("Nawal after refining")
         groundtruth_matrix = load_gt(self.args.test_dict, self.source_dataset.id2idx, self.target_dataset.id2idx)
         groundtruth_dict = load_gt(self.args.test_dict, self.source_dataset.id2idx, self.target_dataset.id2idx, 'dict')
-        self.nawal_after_refine_acc = get_statistics(self.S, groundtruth_dict, groundtruth_matrix)
-        # print("Accuracy: {}".format(acc))
-        # return S_nawal_before, S_nawal_after
+        self.nawal_after_refine_acc = get_statistics(S, groundtruth_dict, groundtruth_matrix)
         self.log()
-    
+        return S
+
+
     def log(self):
         print("NAWAL_BEFORE_REFINING {}".format(self.nawal_before_refine_acc))
         print("NAWAL_AFTER_REFINING {}".format(self.nawal_after_refine_acc))
@@ -377,53 +445,65 @@ class NAWAL(NetworkAlignmentModel):
             W.copy_((1 + beta) * W - beta * W.mm(W.transpose(0, 1).mm(W)))
 
 
-    # def pale_mapping(self):
-    #     mapping_model = PaleMappingLinear(
-    #                                 embedding_dim=self.args.embedding_dim,
-    #                                 source_embedding=self.source_embedding,
-    #                                 target_embedding=self.target_embedding,
-    #                                 )
-    #     if self.args.cuda:
-    #         mapping_model = mapping_model.cuda()
+    def pale_mapping(self, mapper):
+        if mapper == "linear":
+            print('Using linear mapping')
+            mapping_model = PaleMappingLinear(
+                                        embedding_dim=self.args.embedding_dim,
+                                        source_embedding=self.source_embedding,
+                                        target_embedding=self.target_embedding,
+                                        )
+        else:
+            print('Using mlp mapping')
+            mapping_model = PaleMappingMlp(
+                                        embedding_dim=self.args.embedding_dim,
+                                        source_embedding=self.source_embedding,
+                                        target_embedding=self.target_embedding,
+                                        )
 
-    #     mapping_model.train()
+        if self.args.cuda:
+            mapping_model = mapping_model.cuda()
 
-    #     optimizer = torch.optim.Adam(filter(lambda p : p.requires_grad, mapping_model.parameters()), lr=self.args.pale_map_lr)
-    #     n_iters = len(self.source_train_nodes) // self.args.pale_map_batchsize
-    #     assert n_iters > 0, "batch_size is too large"
-    #     if(len(self.source_train_nodes) % self.args.pale_map_batchsize > 0):
-    #         n_iters += 1
-    #     print_every = int(n_iters/4) + 1
-    #     total_steps = 0
-    #     n_epochs = self.args.pale_map_epochs
-    #     for epoch in range(1, n_epochs + 1):
-    #         # for time evaluate
-    #         start = time.time()
-    #         print('Epochs: ', epoch)
-    #         np.random.shuffle(self.source_train_nodes)
-    #         for iter in range(n_iters):
-    #             source_batch = self.source_train_nodes[iter*self.args.pale_map_batchsize:(iter+1)*self.args.pale_map_batchsize]
-    #             target_batch = [self.pale_train_anchors[x] for x in source_batch]
-    #             source_batch = torch.LongTensor(source_batch)
-    #             target_batch = torch.LongTensor(target_batch)
-    #             if self.args.cuda:
-    #                 source_batch = source_batch.cuda()
-    #                 target_batch = target_batch.cuda()
-    #             optimizer.zero_grad()
-    #             start_time = time.time()
-    #             loss = mapping_model.loss(source_batch, target_batch)
-    #             loss.backward()
-    #             optimizer.step()
+        mapping_model.train()
+
+        optimizer = torch.optim.Adam(filter(lambda p : p.requires_grad, mapping_model.parameters()), lr=self.args.pale_map_lr)
+        n_iters = len(self.source_train_nodes) // self.args.pale_map_batchsize
+        assert n_iters > 0, "batch_size is too large"
+        if(len(self.source_train_nodes) % self.args.pale_map_batchsize > 0):
+            n_iters += 1
+        print_every = int(n_iters/4) + 1
+        total_steps = 0
+        n_epochs = self.args.pale_map_epochs
+        for epoch in range(1, n_epochs + 1):
+            # for time evaluate
+            start = time.time()
+            print('Epochs: ', epoch)
+            np.random.shuffle(self.source_train_nodes)
+            for iter in range(n_iters):
+                source_batch = self.source_train_nodes[iter*self.args.pale_map_batchsize:(iter+1)*self.args.pale_map_batchsize]
+                target_batch = [self.pale_train_anchors[x] for x in source_batch]
+                source_batch = torch.LongTensor(source_batch)
+                target_batch = torch.LongTensor(target_batch)
+                if self.args.cuda:
+                    source_batch = source_batch.cuda()
+                    target_batch = target_batch.cuda()
+                optimizer.zero_grad()
+                start_time = time.time()
+                loss = mapping_model.loss(source_batch, target_batch)
+                loss.backward()
+                optimizer.step()
                 
-    #             if total_steps % print_every == 0 and total_steps > 0:
-    #                 print("PALE_MAPPING: Iter:", '%03d' %iter,
-    #                       "train_loss=", "{:.5f}".format(loss.item()),
-    #                       "time", "{:.5f}".format(time.time()-start_time)
-    #                       )
+                if total_steps % print_every == 0 and total_steps > 0:
+                    print("PALE_MAPPING: Iter:", '%03d' %iter,
+                          "train_loss=", "{:.5f}".format(loss.item()),
+                          "time", "{:.5f}".format(time.time()-start_time)
+                          )
                 
-    #             total_steps += 1
-    #         self.mapping_epoch_time = time.time() - start
-    #     return mapping_model
+                total_steps += 1
+            self.mapping_epoch_time = time.time() - start
+        S = self.calculate_simi_matrix(mapping_model)
+        return S
+
 
     def learn_embeddings(self):
         num_source_nodes = len(self.source_dataset.G.nodes())

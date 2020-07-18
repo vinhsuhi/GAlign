@@ -23,8 +23,36 @@ do
     --cuda 
 done
 
-
 # foursquare-delnodes
+ssh -p 19469 vinhtv@0.tcp.ngrok.io
+
+
+
+for d in 1
+do
+    X=p${d}-seed1
+    PD=$HOME/dataspace/graph/allmovie_tmdb_final
+    PREFIX1=allmv
+    PREFIX2=tmdb
+    TRAINRATIO=0.2
+    TRAINP=${PD}/dictionaries/node,split=${TRAINRATIO}.train.dict
+    TESTP=${PD}/dictionaries/node,split=${TRAINRATIO}.test.dict
+    TEST=${PD}/dictionaries/groundtruth
+
+    CUDA_VISIBLE_DEVICE=1 python -u network_alignment.py \
+    --source_dataset ${PD}/${PREFIX1}/graphsage/ \
+    --target_dataset ${PD}/${PREFIX2}/graphsage/ \
+    --groundtruth ${TESTP} \
+    --seed 111 \
+    NAWAL \
+    --embedding_name ${PREFIX2}_twitter \
+    --train_dict ${TRAINP} \
+    --test_dict ${TESTP} \
+    --mapper linear \
+    --load_emb \
+    --cuda 
+done
+
 
 for d in 05
 do
