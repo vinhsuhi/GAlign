@@ -359,7 +359,7 @@ class NAWAL(NetworkAlignmentModel):
         if self.args.cuda:
             self.mapping = self.mapping.cuda()
             self.discriminator = self.discriminator.cuda()
-
+        nawal_map_epoch_times = []
         for n_epoch in range(self.args.nawal_mapping_epochs):
             print('Starting adversarial training epoch %i...' % n_epoch)
             tic = time.time()
@@ -394,7 +394,7 @@ class NAWAL(NetworkAlignmentModel):
             self.save_best()
             
             print('End of epoch %i.\n\n' % n_epoch)
-
+            nawal_map_epoch_times.append(time.time() - tic)
             # update the learning rate (stop if too small)
             self.update_lr()
 
@@ -407,9 +407,10 @@ class NAWAL(NetworkAlignmentModel):
         # print("Accuracy: {}".format(acc))
 
         self.mapping.train()
-        
+        nawal_refine_epoch_times = []
         # training loop
         for n_iter in range(self.n_refinement):
+            tic = time.time()
             # build a dictionary from aligned embeddings
             src_emb = self.mapping(self.source_embedding).data
             tgt_emb = self.target_embedding
@@ -418,7 +419,7 @@ class NAWAL(NetworkAlignmentModel):
             self.procrustes(dico)
             self.dist_mean_cosine()
             self.save_best()
-
+            nawal_refine_epoch_times.append(time.time() - tic)
         self.reload_best()
         
         S = self.calculate_simi_matrix(self.mapping.eval(), save=True)
@@ -427,6 +428,9 @@ class NAWAL(NetworkAlignmentModel):
         groundtruth_dict = load_gt(self.args.test_dict, self.source_dataset.id2idx, self.target_dataset.id2idx, 'dict')
         self.nawal_after_refine_acc = get_statistics(S, groundtruth_dict, groundtruth_matrix)
         self.log()
+        print("NAWAL average map epoch time: {:.4f}".format(np.mean(nawal_map_epoch_times)))
+        print("NAWAL average refine epoch time: {:.4f}".format(np.mean(nawal_refine_epoch_times)))
+        print("NAWAL average emb epoch time: {:.4f}".format(np.mean(self.epoch_times)))
         return S
 
 
@@ -543,8 +547,10 @@ class NAWAL(NetworkAlignmentModel):
         print_every = int(n_iters/4) + 1
         total_steps = 0
         n_epochs = self.args.embedding_epochs
+        self.epoch_times = []
         for epoch in range(1, n_epochs + 1):
             # for time evaluate
+            start_epoch_times = time.time()
             print("Epoch {0}".format(epoch))
             np.random.shuffle(edges)
             for iter in range(n_iters):
@@ -556,13 +562,15 @@ class NAWAL(NetworkAlignmentModel):
                 loss, _, _ = embedding_model.loss(batch_edges[:, 0], batch_edges[:,1])
                 loss.backward()
                 optimizer.step()
-                if total_steps % print_every == 0:
-                    print("EMBEDDING {} Iter:".format(graph_name), '%03d' %iter,
-                              "train_loss=", "{:.5f}".format(loss.item()),
-                              "epoch time", "{:.5f}".format(time.time()-start_time)
-                          )
+                # if total_steps % print_every == 0:
+                #     print("EMBEDDING {} Iter:".format(graph_name), '%03d' %iter,
+                #               "train_loss=", "{:.5f}".format(loss.item()),
+                #               "epoch time", "{:.5f}".format(time.time()-start_time)
+                #           )
                 total_steps += 1
-            
+            self.epoch_times.append(time.time() - start_epoch_times)
+        
+        print("Average Epoch time: {:.4f}".format(np.mean(self.epoch_times)))    
         embedding = embedding_model.get_embedding()
         embedding = embedding.cpu().detach().numpy()
         embedding = torch.FloatTensor(embedding)
