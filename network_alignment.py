@@ -42,7 +42,7 @@ def parse_args():
     parser_nawal.add_argument('--map_optimizer', type=str, default="sgd,lr=0.1")
     parser_nawal.add_argument('--dis_optimizer', type=str, default="sgd,lr=0.1")
     parser_nawal.add_argument('--nawal_mapping_epochs', type=int, default=1) # 5
-    parser_nawal.add_argument('--nawal_mapping_epoch_size', type=int, default=100000)
+    parser_nawal.add_argument('--nawal_mapping_epoch_size', type=int, default=1000000)
     parser_nawal.add_argument('--test_dict', type=str)
     parser_nawal.add_argument('--train_dict', type=str)
     parser_nawal.add_argument('--map_beta', type=float, default=0.001)
