@@ -37,6 +37,7 @@ def get_act_function(activate_function):
         return None
     return activate_function
 
+
 class CombineModel(nn.Module):
     def __init__(self):
         super(CombineModel, self).__init__()
@@ -50,14 +51,14 @@ class CombineModel(nn.Module):
             S_temp[int(k),v] = 1
         
         S = S / torch.sqrt((S**2).sum(dim=1)).view(S.shape[0],1)
-        # S = S / torch.max(S, dim=1)[0].view(S.shape[0],1)
         loss = -(S * S_temp).mean()
-        # loss = (S - 3 * torch.eye(len(S))).mean()
         return loss
+
 
     def forward(self, S1, S2, S3):
         theta_sum = torch.abs(self.thetas[0]) + torch.abs(self.thetas[1]) + torch.abs(self.thetas[2])
         return (torch.abs(self.thetas[0])/theta_sum) * S1 + (torch.abs(self.thetas[1])/theta_sum) * S2 + (torch.abs(self.thetas[2])/theta_sum) * S3
+
 
 class Combine2Model(nn.Module):
     def __init__(self):
@@ -78,6 +79,7 @@ class Combine2Model(nn.Module):
 
     def forward(self, S1, S2):
         return torch.abs(self.thetas[0]) * S1 + torch.abs(self.thetas[1]) * S2
+
 
 class GCN(nn.Module):
     """
@@ -101,12 +103,7 @@ class GCN(nn.Module):
     
     def forward(self, input, A_hat):
         output = self.linear(input)
-        import pdb
-        #pdb.set_trace()
-        #try:
         output = torch.matmul(A_hat, output)
-        #except:
-        #    pdb.set_trace()
         if self.activate_function is not None:
             output = self.activate_function(output)
         return output
@@ -186,20 +183,6 @@ class StableFactor(nn.Module):
             self.alpha_target = self.alpha_target.cuda()
         self.use_cuda = cuda
     
-    # def forward(self, A_hat, net='s'):
-    #     """
-    #     Do the forward 
-    #     :param A_hat is the Normalized Laplacian Matrix
-    #     :net: whether graph considering is source or target graph.
-    #     """
-    #     if net == 's':
-    #         alpha_matrix = torch.diag(self.alpha_source)
-    #     else:
-    #         alpha_matrix = torch.diag(self.alpha_target)
-    #     if self.cuda:
-    #         alpha_matrix = alpha_matrix.cuda()
-    #     A_hat = torch.mm(alpha_matrix, torch.matmul(A_hat, alpha_matrix))
-    #     return A_hat        
         
     def forward(self, A_hat, net='s'):
         """

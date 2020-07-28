@@ -9,7 +9,6 @@ import torch
 import argparse
 import os
 import pdb
-from algorithms.PALE.mapping_model import PaleMappingLinear, PaleMappingMlp
 from utils.graph_utils import load_gt
 import torch.nn.functional as F
 # import timesd
@@ -208,7 +207,11 @@ def parse_args():
     parser_GAlign.add_argument('--refinement_epochs', default=10, type=int)
     parser_GAlign.add_argument('--threshold_refine', type=float, default=0.94, help="The threshold value to get stable candidates")
 
-    
+    # loss
+    parser_GAlign.add_argument('--beta', type=float, default=0.8, help='balancing source-target and source-augment')
+    parser_GAlign.add_argument('--threshold', type=float, default=0.01, help='confidence threshold for adaptivity loss')
+    parser_GAlign.add_argument('--coe_consistency', type=float, default=0.8, help='balancing consistency and adaptivity loss')
+
     return parser.parse_args()
 
 
@@ -256,25 +259,13 @@ if __name__ == '__main__':
     else:
         raise Exception("Unsupported algorithm")
 
-    if args.mapper == "all":
-        s_deep, s_linear, s_mlp = model.align()
-        Simis = [s_deep, s_linear, s_mlp]
-        for i, ele in enumerate(['Deep', 'Linear', "MLP"]):
-            acc, MAP, top5, top10 = get_statistics(Simis[i], groundtruth, use_greedy_match=True, get_all_metric=True)
-            print("{} Accuracy: {:.4f}".format(ele, acc))
-            print("{} MAP: {:.4f}".format(ele, MAP))
-            print("{} Precision_5: {:.4f}".format(ele, top5))
-            print("{} Precision_10: {:.4f}".format(ele, top10))
-            print("-"*100)
 
-    else:
-        S = model.align()
-        print("-"*100)
-        acc, MAP, top5, top10 = get_statistics(S, groundtruth, use_greedy_match=True, get_all_metric=True)
-        print("Accuracy: {:.4f}".format(acc))
-        print("MAP: {:.4f}".format(MAP))
-        print("Precision_5: {:.4f}".format(top5))
-        print("Precision_10: {:.4f}".format(top10))
-        print("-"*100)
-    
+    S = model.align()
+    print("-"*100)
+    acc, MAP, top5, top10 = get_statistics(S, groundtruth, use_greedy_match=True, get_all_metric=True)
+    print("Accuracy: {:.4f}".format(acc))
+    print("MAP: {:.4f}".format(MAP))
+    print("Precision_5: {:.4f}".format(top5))
+    print("Precision_10: {:.4f}".format(top10))
+    print("-"*100)
     print('Running time: {}'.format(time()-start_time))

@@ -41,6 +41,54 @@ class GAlign(NetworkAlignmentModel):
         self.full_dict = load_gt(args.groundtruth, source_dataset.id2idx, target_dataset.id2idx, 'dict')
 
 
+    def graph_augmentation(self, dataset, type_aug='remove_edges'):
+        """
+        Generate small noisy graph from original graph
+        :params dataset: original graph
+        :params type_aug: type of noise added for generating new graph
+        """
+        edges = dataset.get_edges()
+        adj = dataset.get_adjacency_matrix()
+        
+        if type_aug == "remove_edges":
+            num_edges = len(edges)
+            num_remove = int(len(edges) * self.args.noise_level)
+            index_to_remove = np.random.choice(np.arange(num_edges), num_remove, replace=False)
+            edges_to_remove = edges[index_to_remove]
+            for i in range(len(edges_to_remove)):
+                adj[edges_to_remove[i, 0], edges_to_remove[i, 1]] = 0
+                adj[edges_to_remove[i, 1], edges_to_remove[i, 0]] = 0
+        elif type_aug == "add_edges":
+            num_edges = len(edges)
+            num_add = int(len(edges) * self.args.noise_level)
+            count_add = 0
+            while count_add < num_add:
+                random_index = np.random.randint(0, adj.shape[1], 2)
+                if adj[random_index[0], random_index[1]] == 0:
+                    adj[random_index[0], random_index[1]] = 1
+                    adj[random_index[1], random_index[0]] = 1
+                    count_add += 1
+        elif type_aug == "change_feats":
+            feats = np.copy(dataset.features)
+            num_nodes = adj.shape[0]
+            num_nodes_change_feats = int(num_nodes * self.args.noise_level)
+            node_to_change_feats = np.random.choice(np.arange(0, adj.shape[0]), num_nodes_change_feats, replace=False)
+            for node in node_to_change_feats:
+                feat_node = feats[node]
+                feat_node[feat_node == 1] = 0
+                feat_node[np.random.randint(0, feats.shape[1], 1)[0]] = 1
+            feats = torch.FloatTensor(feats)
+            if self.args.cuda:
+                feats = feats.cuda()
+            return feats
+        new_adj_H, _ = Laplacian_graph(adj)
+        if self.args.cuda:
+            new_adj_H = new_adj_H.cuda()
+        return new_adj_H
+
+
+
+
     def align(self):
         """
         The main function of GAlign
@@ -74,23 +122,49 @@ class GAlign(NetworkAlignmentModel):
 
         structural_optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, GAlign.parameters()), lr=self.args.lr)
 
+        new_source_A_hats = []
+        new_target_A_hats = []
+        new_source_A_hats.append(self.graph_augmentation(self.source_dataset, 'remove_edgse'))
+        new_source_A_hats.append(self.graph_augmentation(self.source_dataset, 'add_edges'))
+        new_source_A_hats.append(source_A_hat)
+        new_source_feats = self.graph_augmentation(self.source_dataset, 'change_feats')
+        new_target_A_hats.append(self.graph_augmentation(self.target_dataset, 'remove_edgse'))
+        new_target_A_hats.append(self.graph_augmentation(self.target_dataset, 'add_edges'))
+        new_target_A_hats.append(target_A_hat)
+        new_target_feats = self.graph_augmentation(self.target_dataset, 'change_feats')
+
         for epoch in range(self.args.GAlign_epochs):
             if self.args.log:
                 print("Structure learning epoch: {}".format(epoch))
             for i in range(2):
-                import pdb
-                structural_optimizer.zero_grad()
-                if i == 0:
-                    A_hat = source_A_hat
-                    outputs = GAlign(source_A_hat, 's')
-                else:
-                    A_hat = target_A_hat
-                    outputs = GAlign(target_A_hat, 't')
-                loss = self.linkpred_loss(outputs[-1], A_hat)
-                if self.args.log:
-                    print("Loss: {:.4f}".format(loss.data))
-                loss.backward()
-                structural_optimizer.step()
+                for j in range(len(new_source_A_hats)):
+                    structural_optimizer.zero_grad()
+                    if i == 0:
+                        A_hat = source_A_hat
+                        augment_A_hat = new_source_A_hats[j]
+                        outputs = GAlign(source_A_hat, 's')
+                        if j < 3:
+                            augment_outputs, _ = GAlign(augment_A_hat, 's')
+                        else:
+                            augment_outputs, _ = GAlign(augment_A_hat, 's', new_source_feats)
+                    else:
+                        A_hat = target_A_hat
+                        augment_A_hat = new_target_A_hats[j]
+                        outputs = GAlign(target_A_hat, 't')
+                        if j < 3:
+                            augment_outputs, _ = GAlign(augment_A_hat, 't')
+                        else:
+                            augment_outputs, _ = GAlign(augment_A_hat, 't', new_target_feats)
+                    consistency_loss = self.linkpred_loss(outputs[-1], A_hat)
+                    augment_consistency_loss = self.linkpred_loss(augment_outputs[-1], augment_A_hat)
+                    consistency_loss = self.args.beta * consistency_loss + (1-self.args.beta) * augment_consistency_loss
+                    diff = torch.abs(outputs[-1] - augment_outputs[-1])
+                    noise_adaptivity_loss = (diff[diff < self.args.threshold] ** 2).sum() / len(outputs)
+                    loss = self.args.coe_consistency * consistency_loss + (1 - self.args.coe_consistency) * noise_adaptivity_loss
+                    if self.args.log:
+                        print("Loss: {:.4f}".format(loss.data))
+                    loss.backward()
+                    structural_optimizer.step()
         GAlign.eval()
         return GAlign
 
