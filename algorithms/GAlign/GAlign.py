@@ -230,7 +230,7 @@ class GAlign(NetworkAlignmentModel):
         S_max = None
         source_outputs = GAlign(refinement_model(source_A_hat, 's'), 's')
         target_outputs = GAlign(refinement_model(target_A_hat, 't'), 't')
-        acc, S = get_acc(source_outputs, target_outputs, self.full_dict, self.alphas)
+        acc, S = get_acc(source_outputs, target_outputs, self.full_dict, self.alphas, just_S=True)
         score = np.max(S, axis=1).mean()
         acc_max = 0
         alpha_source_max = None
@@ -255,7 +255,7 @@ class GAlign(NetworkAlignmentModel):
             refinement_model.alpha_target[target_candidates] *= 1.1
             source_outputs = GAlign(refinement_model(source_A_hat, 's'), 's')
             target_outputs = GAlign(refinement_model(target_A_hat, 't'), 't')
-            acc, S = get_acc(source_outputs, target_outputs, self.full_dict, self.alphas)
+            acc, S = get_acc(source_outputs, target_outputs, self.full_dict, self.alphas, just_S=True)
             score = np.max(S, axis=1).mean()
             if score > refinement_model.score_max:
                 refinement_model.score_max = score

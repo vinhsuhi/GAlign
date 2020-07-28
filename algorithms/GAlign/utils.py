@@ -72,7 +72,7 @@ def investigate(source_outputs, target_outputs, source_edges, target_edges, full
         print("Layer: {}, anchor distance1: {:.4f}, anchor distance2: {:.4f}".format(i, anchor_distance1[i].mean(), anchor_distance2[i].mean()))
 
 
-def get_acc(source_outputs, target_outputs, test_dict = None, alphas=None):
+def get_acc(source_outputs, target_outputs, test_dict = None, alphas=None, just_S = False):
     Sf = np.zeros((len(source_outputs[0]), len(target_outputs[0])))
     list_S_numpy = []
     accs = ""
@@ -80,15 +80,17 @@ def get_acc(source_outputs, target_outputs, test_dict = None, alphas=None):
         S = torch.matmul(F.normalize(source_outputs[i]), F.normalize(target_outputs[i]).t())
         S_numpy = S.detach().cpu().numpy()
         if test_dict is not None:
-            acc = get_statistics(S_numpy, test_dict)
-            accs += "Acc layer {} is: {:.4f}, ".format(i, acc)
+            if not just_S:
+                acc = get_statistics(S_numpy, test_dict)
+                accs += "Acc layer {} is: {:.4f}, ".format(i, acc)
         if alphas is not None:
             Sf += alphas[i] * S_numpy
         else:
             Sf += S_numpy
     if test_dict is not None:
-        acc = get_statistics(Sf, test_dict)
-        accs += "Final acc is: {:.4f}".format(acc)
+        if not just_S:
+            acc = get_statistics(Sf, test_dict)
+            accs += "Final acc is: {:.4f}".format(acc)
     return accs, Sf
 
 
