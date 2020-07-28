@@ -1,5 +1,5 @@
 # GAlign
-Code of the paper: ***[Adaptive Network Alignment with Multi-order Convolutional Networks(https://conferences.computer.org/icde/2020/pdfs/ICDE2020-5acyuqhpJ6L9P042wmjY1p/290300a085/290300a085.pdf)]***.
+Code of the paper: ***[Adaptive Network Alignment with Multi-order Convolutional Networks](https://conferences.computer.org/icde/2020/pdfs/ICDE2020-5acyuqhpJ6L9P042wmjY1p/290300a085/290300a085.pdf)***.
 
 # Environment
 
