@@ -144,17 +144,17 @@ class GAlign(NetworkAlignmentModel):
                         augment_A_hat = new_source_A_hats[j]
                         outputs = GAlign(source_A_hat, 's')
                         if j < 3:
-                            augment_outputs, _ = GAlign(augment_A_hat, 's')
+                            augment_outputs = GAlign(augment_A_hat, 's')
                         else:
-                            augment_outputs, _ = GAlign(augment_A_hat, 's', new_source_feats)
+                            augment_outputs = GAlign(augment_A_hat, 's', new_source_feats)
                     else:
                         A_hat = target_A_hat
                         augment_A_hat = new_target_A_hats[j]
                         outputs = GAlign(target_A_hat, 't')
                         if j < 3:
-                            augment_outputs, _ = GAlign(augment_A_hat, 't')
+                            augment_outputs = GAlign(augment_A_hat, 't')
                         else:
-                            augment_outputs, _ = GAlign(augment_A_hat, 't', new_target_feats)
+                            augment_outputs = GAlign(augment_A_hat, 't', new_target_feats)
                     consistency_loss = self.linkpred_loss(outputs[-1], A_hat)
                     augment_consistency_loss = self.linkpred_loss(augment_outputs[-1], augment_A_hat)
                     consistency_loss = self.args.beta * consistency_loss + (1-self.args.beta) * augment_consistency_loss
