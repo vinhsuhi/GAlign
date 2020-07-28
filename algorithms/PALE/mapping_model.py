@@ -78,9 +78,8 @@ class PaleMappingMlp(PaleMapping):
 
         batch_size = source_feats.shape[0]
         mapping_loss = self.loss_fn.loss(source_feats_after_mapping, target_feats) / batch_size
-        
-
         return mapping_loss
+
 
     def forward(self, source_feats):
         ret = self.mlp(source_feats)

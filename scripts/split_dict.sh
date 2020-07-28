@@ -198,6 +198,6 @@ done
 
 D=REGAL-d${d}-seed1
 python utils/split_dict.py \
---input $HOME/dataspace/graph/allmovie_tmdb/dictionaries/groundtruth \
---out_dir $HOME/dataspace/graph/allmovie_tmdb/dictionaries/ \
---split 0.1
+--input $HOME/dataspace/graph/allmovie_tmdb_final/dictionaries/groundtruth \
+--out_dir $HOME/dataspace/graph/allmovie_tmdb_final/dictionaries/ \
+--split 0.2

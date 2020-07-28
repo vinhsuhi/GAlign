@@ -31,8 +31,8 @@ ssh -p 19469 vinhtv@0.tcp.ngrok.io
 for d in 1
 do
     X=p${d}-seed1
-    PD=$HOME/dataspace/graph/allmovie_tmdb_final
-    PREFIX1=allmv
+    PD=$HOME/dataspace/graph/fb-tw-data
+    PREFIX1=
     PREFIX2=tmdb
     TRAINRATIO=0.2
     TRAINP=${PD}/dictionaries/node,split=${TRAINRATIO}.train.dict
@@ -45,12 +45,10 @@ do
     --groundtruth ${TESTP} \
     --seed 111 \
     NAWAL \
-    --embedding_name ${PREFIX2}_twitter \
+    --embedding_name allmovie_tmdb \
     --train_dict ${TRAINP} \
     --test_dict ${TESTP} \
-    --mapper linear \
-    --load_emb \
-    --cuda 
+    --mapper linear 
 done
 
 
@@ -678,14 +676,12 @@ done
 
 
 
-for d in 1
+for d in 4 3 2 1
 do
-
-
     X=p${d}-seed1
     PD=$HOME/dataspace/graph/fq-tw-data/foursquare
     PREFIX2=REGAL-d${d}-seed1
-    TRAINRATIO=0.1
+    TRAINRATIO=0.2
     TRAINP=${PD}/${PREFIX2}/dictionaries/node,split=${TRAINRATIO}.train.dict
     TESTP=${PD}/${PREFIX2}/dictionaries/node,split=${TRAINRATIO}.test.dict
     TEST=${PD}/${PREFIX2}/dictionaries/groundtruth
@@ -698,10 +694,11 @@ do
     NAWAL \
     --embedding_name ${PREFIX2}_foursquare \
     --train_dict ${TRAINP} \
-    --test_dict ${TEST} \
+    --test_dict ${TESTP} \
+    --mapper all \
     --pale_map_epochs 100 \
     --embedding_dim 200 \
-    --cuda 
+    --cuda > output/ablation_test
 done
 
     # X=p${d}-seed1
