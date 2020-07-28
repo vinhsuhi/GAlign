@@ -11,7 +11,7 @@ Code of the paper: ***Entity Alignment for Knowledge Graphs with Multi-order Con
 # Running
 
 ```
-python -u network_alignment.py --source_dataset data/allmv_tmdb/allmv/graphsage --target_dataset data/allmv_tmdb/tmdb/graphsage --groundtruth data/allmv_tmdb/dictionaries/groundtruth GAlign --log --GAlign_epochs 10 --refinement_epochs 50 --cuda
+python -u network_alignment.py --source_dataset graph_data/allmv_tmdb/allmv/graphsage --target_dataset graph_data/allmv_tmdb/tmdb/graphsage --groundtruth graph_data/allmv_tmdb/dictionaries/groundtruth GAlign --log --GAlign_epochs 10 --refinement_epochs 50 --cuda
 ```
 
 # Citation
