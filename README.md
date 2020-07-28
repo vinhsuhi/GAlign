@@ -1,5 +1,5 @@
 # GAlign
-Code of the paper: ***Adaptive Network Alignment with Multi-order Convolutional Network***.
+Code of the paper: ***[Adaptive Network Alignment with Multi-order Convolutional Networks(https://conferences.computer.org/icde/2020/pdfs/ICDE2020-5acyuqhpJ6L9P042wmjY1p/290300a085/290300a085.pdf)]***.
 
 # Environment
 
@@ -18,4 +18,4 @@ python -u network_alignment.py --source_dataset graph_data/allmv_tmdb/allmv/grap
 
 Please politely cite our work as follows:
 
-*Huynh Thanh Trung, Tong Van Vinh, Nguyen Thanh Tam, Hongzhi Yin, Matthias Weidlich, Nguyen Quoc Viet Hung. Adaptive Network Alignment with Multi-order Convolutional Network. In: ICDE 2020*
+*Huynh Thanh Trung, Tong Van Vinh, Nguyen Thanh Tam, Hongzhi Yin, Matthias Weidlich, Nguyen Quoc Viet Hung. Adaptive Network Alignment with Multi-order Convolutional Networks. In: ICDE 2020*
