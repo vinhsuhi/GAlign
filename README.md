@@ -1,5 +1,5 @@
 # GAlign
-Code of the paper: ***Entity Alignment for Knowledge Graphs with Multi-order Convolutional Network***.
+Code of the paper: ***Adaptive Network Alignment with Multi-order Convolutional Network***.
 
 # Environment
 
