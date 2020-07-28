@@ -220,9 +220,9 @@ if __name__ == '__main__':
     args = parse_args()
     print(args)
     start_time = time()
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    # random.seed(args.seed)
+    # np.random.seed(args.seed)
+    # torch.manual_seed(args.seed)
 
     source_dataset = Dataset(args.source_dataset)
     target_dataset = Dataset(args.target_dataset)
