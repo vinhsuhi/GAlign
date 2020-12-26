@@ -16,7 +16,6 @@ tests/test_semisynthetic.py
 algorithms/NAWAL/__pycache__/
 # algorithms/__init__.py
 log/
-*.npy
 tools/
 output/
 algorithms/PALE/embeddings/
