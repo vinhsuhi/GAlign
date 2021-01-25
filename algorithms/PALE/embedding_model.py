@@ -38,6 +38,7 @@ class PaleEmbedding(nn.Module):
         self.link_pred_layer = EmbeddingLossFunctions()
         self.n_nodes = n_nodes
         self.use_cuda = cuda
+        self.cos = nn.CosineSimilarity(dim=-1, eps=1e-6)
 
 
     def loss(self, nodes, neighbor_nodes):
@@ -49,6 +50,15 @@ class PaleEmbedding(nn.Module):
         loss1 = loss1/batch_size
         
         return loss, loss0, loss1
+
+    def curvature_loss(self, walks):
+        walks_emb = self.node_embedding(walks) # bs x wl x emb_dim
+        target = walks_emb[:, 1:]
+        source = walks_emb[:, :-1]
+        dis = target - source
+        cos_values = torch.cos(dis[:, 1:], dis[:, :-1])
+        loss = 1 - cos_values.mean()
+        return loss
 
 
     def forward(self, nodes, neighbor_nodes=None):
@@ -96,3 +106,5 @@ class PaleEmbedding(nn.Module):
                 embedding = torch.cat((embedding, batch_node_embeddings))
 
         return embedding
+
+

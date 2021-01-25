@@ -174,25 +174,80 @@ class PALE(NetworkAlignmentModel):
                         source_edges = np.concatenate((source_edges, np.array(([[inverse_gt_train[edge[1]], inverse_gt_train[edge[0]]]]))), axis=0)
         return source_edges, target_edges
 
+    
+    def gen_neigbor_dict(self, edges):
+        neib_dict = dict()
+        for i in range(len(edges)):
+            source, target = edges[i, 0], edges[i, 1]
+            if source not in neib_dict:
+                neib_dict[source] = set([target])
+            else:
+                neib_dict[source].add(target)
+
+            if target not in neib_dict:
+                neib_dict[target] = set([source])
+            else:
+                neib_dict[target].add(source)
+        return neib_dict
+
+    
+    def run_walks(self, neib_dict):
+        neib_dict = {key: list(value) for key, value in neib_dict.items()}
+        walks = []
+        # new_edges = []
+        print("Random walks...")
+        for key, value in tqdm(neib_dict.items()):
+            cur_node = key
+            for iter in range(self.args.num_walks):
+                walk = [cur_node]
+                success = False
+                count = 1
+                while not success:
+                    # try ten times
+                    for i in range(10):
+                        next_node = np.random.choice(neib_dict[key])
+                        if next_node in walk:
+                            continue 
+                        break
+                    if next_node in walk:
+                        break
+                    walk.append(next_node)
+                    cur_node = next_node 
+                    count += 1
+                    if count == self.args.walk_len:
+                        success = True 
+                if not success:
+                    continue 
+                walks.append(walk)
+        return np.array(walks)
+
+
+
+
+
     def learn_embeddings(self):
         num_source_nodes = len(self.source_dataset.G.nodes())
         source_deg = self.source_dataset.get_nodes_degrees()
         source_edges = self.source_dataset.get_edges()
 
-
-
         num_target_nodes = len(self.target_dataset.G.nodes())
         target_deg = self.target_dataset.get_nodes_degrees()
         target_edges = self.target_dataset.get_edges()
 
+        neibor_dict1 = self.gen_neigbor_dict(source_edges)
+        neibor_dict2 = self.gen_neigbor_dict(target_edges)
+
+        self.walks1 = self.run_walks(neibor_dict1)
+        self.walks2 = self.run_walks(neibor_dict2)
+
         #source_edges, target_edges = self.extend_edge(source_edges, target_edges)
         
         print("Done extend edges")
-        self.source_embedding = self.learn_embedding(num_source_nodes, source_deg, source_edges) #, 's')
-        self.target_embedding = self.learn_embedding(num_target_nodes, target_deg, target_edges) #, 't')
+        self.source_embedding = self.learn_embedding(num_source_nodes, source_deg, source_edges, self.walks1) #, 's')
+        self.target_embedding = self.learn_embedding(num_target_nodes, target_deg, target_edges, self.walks2) #, 't')
 
 
-    def learn_embedding(self, num_nodes, deg, edges):
+    def learn_embedding(self, num_nodes, deg, edges, walks):
         embedding_model = PaleEmbedding(
                                         n_nodes = num_nodes,
                                         embedding_dim = self.embedding_dim,
@@ -204,17 +259,18 @@ class PALE(NetworkAlignmentModel):
             embedding_model = embedding_model.cuda()
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, embedding_model.parameters()), lr=self.emb_lr)
-        embedding = self.train_embedding(embedding_model, edges, optimizer)
+        embedding = self.train_embedding(embedding_model, edges, optimizer, walks)
 
         return embedding
 
 
-    def train_embedding(self, embedding_model, edges, optimizer):
+    def train_embedding(self, embedding_model, edges, optimizer, walks):
         n_iters = len(edges) // self.emb_batchsize
         assert n_iters > 0, "batch_size is too large!"
         if(len(edges) % self.emb_batchsize > 0):
             n_iters += 1
         print_every = int(n_iters/4) + 1
+        walk_batch_size = len(walks) // n_iters
         total_steps = 0
         n_epochs = self.emb_epochs
         for epoch in range(1, n_epochs + 1):
@@ -223,13 +279,18 @@ class PALE(NetworkAlignmentModel):
 
             print("Epoch {0}".format(epoch))
             np.random.shuffle(edges)
+            np.random.shuffle(walks)
             for iter in range(n_iters):
                 batch_edges = torch.LongTensor(edges[iter*self.emb_batchsize:(iter+1)*self.emb_batchsize])
+                batch_walks = torch.LongTensor(walks[iter*walk_batch_size:(iter+1)*walk_batch_size])
                 if self.cuda:
                     batch_edges = batch_edges.cuda()
+                    batch_walks = batch_walks.cuda()
+                
                 start_time = time.time()
                 optimizer.zero_grad()
                 loss, loss0, loss1 = embedding_model.loss(batch_edges[:, 0], batch_edges[:,1])
+                curvature_loss = embedding_model.curvature_loss(batch_walks)
                 loss.backward()
                 optimizer.step()
                 if total_steps % print_every == 0:
