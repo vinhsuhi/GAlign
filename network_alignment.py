@@ -152,8 +152,9 @@ def parse_args():
     parser_PALE.add_argument('--batch_size_embedding',default=512,         type=int)
     parser_PALE.add_argument('--embedding_epochs',    default=500,        type=int)
     parser_PALE.add_argument('--neg_sample_size',     default=10,          type=int)
-    parser_PALE.add_argument('--num_walks',     default=20,          type=int)
-    parser_PALE.add_argument('--walk_len',     default=5,          type=int)
+    parser_PALE.add_argument('--num_walks',     default=10,          type=int)
+    parser_PALE.add_argument('--walk_len',     default=10,          type=int)
+    parser_PALE.add_argument('--cur_weight',     default=1,          type=float)
     
 
     parser_PALE.add_argument('--learning_rate2',      default=0.01,       type=float)

@@ -292,7 +292,7 @@ class PALE(NetworkAlignmentModel):
                 optimizer.zero_grad()
                 loss, loss0, loss1 = embedding_model.loss(batch_edges[:, 0], batch_edges[:,1])
                 curvature_loss = embedding_model.curvature_loss(batch_walks)
-                loss += curvature_loss
+                loss += self.args.cur_weight * curvature_loss
                 loss.backward()
                 optimizer.step()
                 if total_steps % print_every == 0:
