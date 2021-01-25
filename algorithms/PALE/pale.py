@@ -1,4 +1,5 @@
 from algorithms.network_alignment_model import NetworkAlignmentModel
+from tqdm import tqdm
 from algorithms.PALE.embedding_model import PaleEmbedding
 from algorithms.PALE.mapping_model import PaleMappingLinear, PaleMappingMlp
 from input.dataset import Dataset

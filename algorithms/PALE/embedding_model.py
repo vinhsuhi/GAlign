@@ -56,7 +56,7 @@ class PaleEmbedding(nn.Module):
         target = walks_emb[:, 1:]
         source = walks_emb[:, :-1]
         dis = target - source
-        cos_values = torch.cos(dis[:, 1:], dis[:, :-1])
+        cos_values = self.cos(dis[:, 1:], dis[:, :-1])
         loss = 1 - cos_values.mean()
         return loss
 
