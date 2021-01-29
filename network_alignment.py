@@ -162,6 +162,7 @@ def parse_args():
     parser_PALE.add_argument('--mapping_epochs',      default=100,         type=int)
     parser_PALE.add_argument('--mapping_model',       default='linear')
     parser_PALE.add_argument('--activate_function',   default='sigmoid')
+    parser_PALE.add_argument('--toy',   action="store_true")
     parser_PALE.add_argument('--train_dict',          default='dataspace/douban/dictionaries/node,split=0.2.train.dict')
     parser_PALE.add_argument('--embedding_name',          default='')
     

@@ -62,8 +62,71 @@ class PALE(NetworkAlignmentModel):
 
     def get_target_embedding(self):
         return self.target_embedding
+    
+    def run_toy(self):
+        edges = [[1, 2], [2, 3], [3,4], [4, 1], [3, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 17], [17, 18], [18, 7], [10, 11], [11, 12], [12, 13], [13, 14], [14, 15], [15, 16], [16, 13]]
+        edges2 = [[edges[i][1], edges[i][0]] for i in range(len(edges))]
+        edges += edges2
+        edges = np.array(edges) - 1
+        num_nodes = np.max(edges) + 1
+        neib_dict = self.gen_neigbor_dict(edges)
+        degree = np.array([len(neib_dict[i]) for i in range(num_nodes)])
+        walk = self.run_walks(neib_dict)
+
+        embedding_model = PaleEmbedding(
+                                        n_nodes = num_nodes,
+                                        embedding_dim = 2,
+                                        deg= degree,
+                                        neg_sample_size = 3,
+                                        cuda = self.cuda,
+                                        )
+        if self.cuda:
+            embedding_model = embedding_model.cuda()
+
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, embedding_model.parameters()), lr=self.emb_lr)
+
+        for epoch in range(50):
+            print("Epoch {0}".format(epoch))
+            np.random.shuffle(edges)
+            np.random.shuffle(walks)
+            batch_edges = torch.LongTensor(edges)
+            batch_walks = torch.LongTensor(walks)
+            if self.cuda:
+                batch_edges = batch_edges.cuda()
+                batch_walks = batch_walks.cuda()
+                
+            start_time = time.time()
+            optimizer.zero_grad()
+            loss, loss0, loss1 = embedding_model.loss(batch_edges[:, 0], batch_edges[:,1])
+            curvature_loss = embedding_model.curvature_loss(batch_walks)
+            loss += self.args.cur_weight * curvature_loss
+            loss.backward()
+            optimizer.step()
+            if total_steps % print_every == 0:
+            print(
+                        "train_loss=", "{:.5f}".format(loss.item()),
+                        "curvature_loss=", "{:.5f}".format(curvature_loss.item()),
+                        "time", "{:.5f}".format(time.time()-start_time)
+                    )
+            total_steps += 1
+            
+            # for time evaluate
+            self.embedding_epoch_time = time.time() - start
+            
+        embedding = embedding_model.get_embedding()
+        embedding = embedding.cpu().detach().numpy()
+        np.savetxt("emb_toy.npy", embedding)
+        print("DONE!")
+        exit()
+
+
 
     def align(self):
+
+        if self.args.toy:
+            self.run_toy()
+            exit()
+
         self.learn_embeddings()
 
         self.to_word2vec_format(self.source_embedding, self.source_dataset.G.nodes(), 'algorithms/PALE/embeddings', self.embedding_name + "_source", \
