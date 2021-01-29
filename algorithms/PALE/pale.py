@@ -71,11 +71,11 @@ class PALE(NetworkAlignmentModel):
         num_nodes = np.max(edges) + 1
         neib_dict = self.gen_neigbor_dict(edges)
         degree = np.array([len(neib_dict[i]) for i in range(num_nodes)])
-        walk = self.run_walks(neib_dict)
+        walks = self.run_walks(neib_dict)
 
         embedding_model = PaleEmbedding(
                                         n_nodes = num_nodes,
-                                        embedding_dim = 2,
+                                        embedding_dim = 3,
                                         deg= degree,
                                         neg_sample_size = 3,
                                         cuda = self.cuda,
@@ -85,7 +85,7 @@ class PALE(NetworkAlignmentModel):
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, embedding_model.parameters()), lr=self.emb_lr)
 
-        for epoch in range(50):
+        for epoch in range(1000):
             print("Epoch {0}".format(epoch))
             np.random.shuffle(edges)
             np.random.shuffle(walks)
@@ -104,14 +104,14 @@ class PALE(NetworkAlignmentModel):
             optimizer.step()
             print("train_loss=", "{:.5f}".format(loss.item()), "curvature_loss=", "{:.5f}".format(curvature_loss.item()),
                         "time", "{:.5f}".format(time.time()-start_time))
-            total_steps += 1
             
-            # for time evaluate
-            self.embedding_epoch_time = time.time() - start
             
         embedding = embedding_model.get_embedding()
         embedding = embedding.cpu().detach().numpy()
-        np.savetxt("emb_toy.npy", embedding)
+        np.savetxt("emb_toy{}.csv".format(self.args.cur_weight), embedding, delimiter='\t')
+        file = open('label.csv', 'w')
+        for i in range(num_nodes):
+            file.write("{}\n".format(i))
         print("DONE!")
         exit()
 
