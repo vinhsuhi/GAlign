@@ -63,7 +63,7 @@ class PaleEmbedding(nn.Module):
 
     def forward(self, nodes, neighbor_nodes=None):
         node_output = self.node_embedding(nodes)
-        node_output = F.normalize(node_output, dim=1)
+        # node_output = F.normalize(node_output, dim=1)
 
         if neighbor_nodes is not None:
             neg = fixed_unigram_candidate_sampler(
@@ -81,8 +81,8 @@ class PaleEmbedding(nn.Module):
             neighbor_output = self.node_embedding(neighbor_nodes)
             neg_output = self.node_embedding(neg)
             # normalize
-            neighbor_output = F.normalize(neighbor_output, dim=1)
-            neg_output = F.normalize(neg_output, dim=1)
+            # neighbor_output = F.normalize(neighbor_output, dim=1)
+            # neg_output = F.normalize(neg_output, dim=1)
 
             return node_output, neighbor_output, neg_output
 
