@@ -102,12 +102,8 @@ class PALE(NetworkAlignmentModel):
             loss += self.args.cur_weight * curvature_loss
             loss.backward()
             optimizer.step()
-            if total_steps % print_every == 0:
-            print(
-                        "train_loss=", "{:.5f}".format(loss.item()),
-                        "curvature_loss=", "{:.5f}".format(curvature_loss.item()),
-                        "time", "{:.5f}".format(time.time()-start_time)
-                    )
+            print("train_loss=", "{:.5f}".format(loss.item()), "curvature_loss=", "{:.5f}".format(curvature_loss.item()),
+                        "time", "{:.5f}".format(time.time()-start_time))
             total_steps += 1
             
             # for time evaluate
