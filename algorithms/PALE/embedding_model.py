@@ -33,6 +33,7 @@ class PaleEmbedding(nn.Module):
 
         super(PaleEmbedding, self).__init__()
         self.node_embedding = nn.Embedding(n_nodes, embedding_dim)
+        torch.nn.init.xavier_normal_(self.node_embedding.weight.data)
         self.deg = deg
         self.neg_sample_size = neg_sample_size
         self.link_pred_layer = EmbeddingLossFunctions()
