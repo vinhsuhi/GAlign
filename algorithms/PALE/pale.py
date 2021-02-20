@@ -77,7 +77,7 @@ class PALE(NetworkAlignmentModel):
 
         embedding_model = PaleEmbedding(
                                         n_nodes = num_nodes,
-                                        embedding_dim = 3,
+                                        embedding_dim = 2,
                                         deg= degree,
                                         neg_sample_size = 3,
                                         cuda = self.cuda,
