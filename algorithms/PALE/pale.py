@@ -89,7 +89,7 @@ class PALE(NetworkAlignmentModel):
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, embedding_model.parameters()), lr=self.emb_lr)
 
-        for epoch in range(5000):
+        for epoch in range(50000):
             print("Epoch {0}".format(epoch))
             np.random.shuffle(edges)
             np.random.shuffle(walks)
