@@ -74,7 +74,7 @@ class PALE(NetworkAlignmentModel):
         # walks = self.run_walks(neib_dict)
         # walks = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]]
         # walks = [[0, 1, 2, 3], [1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [6, 7, 8, 9], [9, 10, 11, 12], [12, 13, 14, 15], [13, ]]
-        walks = [[i, i+1, i+2, i+3] for i in range(17)]
+        walks = [[i % 18, (i+1) % 18, (i+2) % 18, (i+3) % 18] for i in range(18)]
         walks = np.array(walks)
 
         embedding_model = PaleEmbedding(
