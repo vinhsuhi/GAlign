@@ -65,7 +65,7 @@ class PALE(NetworkAlignmentModel):
     
     def run_toy(self):
         # edges = [[1, 2], [2, 3], [3,4], [4, 1], [3, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 17], [17, 18], [18, 7], [10, 11], [11, 12], [12, 13], [13, 14], [14, 15], [15, 16], [16, 13]]
-        edges = [[i, i + 1] for i in range(18)]
+        edges = [[i, i + 1] for i in range(1, 18)]
         edges2 = [[edges[i][1], edges[i][0]] for i in range(len(edges))]
         edges += edges2
         edges = np.array(edges) - 1
