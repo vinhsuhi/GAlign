@@ -72,7 +72,9 @@ class PALE(NetworkAlignmentModel):
         neib_dict = self.gen_neigbor_dict(edges)
         degree = np.array([len(neib_dict[i]) for i in range(num_nodes)])
         # walks = self.run_walks(neib_dict)
-        walks = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]]
+        # walks = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]]
+        # walks = [[0, 1, 2, 3], [1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [6, 7, 8, 9], [9, 10, 11, 12], [12, 13, 14, 15], [13, ]]
+        walks = [[i, i+1, i+2, i+3] for i in range(18)]
         walks = np.array(walks)
 
         embedding_model = PaleEmbedding(
