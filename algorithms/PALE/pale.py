@@ -75,6 +75,8 @@ class PALE(NetworkAlignmentModel):
         # walks = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]]
         # walks = [[0, 1, 2, 3], [1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [6, 7, 8, 9], [9, 10, 11, 12], [12, 13, 14, 15], [13, ]]
         walks = [[(i + j) % 18 for j in range(4)] for i in range(18)]
+        import pdb
+        pdb.set_trace()
         walks = np.array(walks)
 
         embedding_model = PaleEmbedding(
@@ -89,7 +91,7 @@ class PALE(NetworkAlignmentModel):
 
         optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, embedding_model.parameters()), lr=self.emb_lr)
 
-        for epoch in range(50000):
+        for epoch in range(15000):
             print("Epoch {0}".format(epoch))
             np.random.shuffle(edges)
             np.random.shuffle(walks)
