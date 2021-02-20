@@ -64,7 +64,8 @@ class PALE(NetworkAlignmentModel):
         return self.target_embedding
     
     def run_toy(self):
-        edges = [[1, 2], [2, 3], [3,4], [4, 1], [3, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 17], [17, 18], [18, 7], [10, 11], [11, 12], [12, 13], [13, 14], [14, 15], [15, 16], [16, 13]]
+        # edges = [[1, 2], [2, 3], [3,4], [4, 1], [3, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 17], [17, 18], [18, 7], [10, 11], [11, 12], [12, 13], [13, 14], [14, 15], [15, 16], [16, 13]]
+        edges = [[i, i + 1] for i in range(18)]
         edges2 = [[edges[i][1], edges[i][0]] for i in range(len(edges))]
         edges += edges2
         edges = np.array(edges) - 1
@@ -74,11 +75,11 @@ class PALE(NetworkAlignmentModel):
         # walks = self.run_walks(neib_dict)
         # walks = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]]
         # walks = [[0, 1, 2, 3], [1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [6, 7, 8, 9], [9, 10, 11, 12], [12, 13, 14, 15], [13, ]]
-        walks = [[(i + j) % 18 for j in range(4)] for i in range(18)]
-        walks += [[0, 1, 2, 3] for i in range(20)]
-        walks += [[17, 0, 1, 2] for i in range(20)]
-        walks += [[16, 17, 0, 1] for i in range(20)]
-        walks += [[15, 16, 17, 0] for i in range(20)]
+        walks = [[(i + j) % 18 for j in range(4)] for i in range(18 - 4)]
+        # walks += [[0, 1, 2, 3] for i in range(20)]
+        # walks += [[17, 0, 1, 2] for i in range(20)]
+        # walks += [[16, 17, 0, 1] for i in range(20)]
+        # walks += [[15, 16, 17, 0] for i in range(20)]
         # import pdb
         # pdb.set_trace()
         walks = np.array(walks)
