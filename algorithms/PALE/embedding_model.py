@@ -33,6 +33,7 @@ class PaleEmbedding(nn.Module):
 
         super(PaleEmbedding, self).__init__()
         self.node_embedding = nn.Embedding(n_nodes, embedding_dim)
+        self.num_nodes = n_nodes
         torch.nn.init.xavier_normal_(self.node_embedding.weight.data)
         self.fixed_data = self.node_embedding.weight.data[0]
         self.deg = deg
@@ -54,7 +55,10 @@ class PaleEmbedding(nn.Module):
         return loss, loss0, loss1
 
     def curvature_loss(self, walks):
-        walks_emb = self.node_embedding(walks) # bs x wl x emb_dim
+        all_emb = self.node_embedding(torch.LongTensor(np.array(arange(self.num_nodes))))
+        all_emb[0] = self.fixed_data
+        print(self.fixed_data)
+        walks_emb = self.all_emb[walks] # bs x wl x emb_dim
         target = walks_emb[:, 1:]
         source = walks_emb[:, :-1]
         dis = target - source
