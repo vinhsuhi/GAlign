@@ -74,7 +74,7 @@ class PALE(NetworkAlignmentModel):
         # walks = self.run_walks(neib_dict)
         # walks = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]]
         # walks = [[0, 1, 2, 3], [1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [6, 7, 8, 9], [9, 10, 11, 12], [12, 13, 14, 15], [13, ]]
-        walks = [[i % 18, (i+1) % 18, (i+2) % 18, (i+3) % 18] for i in range(18)]
+        walks = [[(i + j) % 18 for j in range(4)] for i in range(18)]
         walks = np.array(walks)
 
         embedding_model = PaleEmbedding(
@@ -103,7 +103,7 @@ class PALE(NetworkAlignmentModel):
             optimizer.zero_grad()
             loss, loss0, loss1 = embedding_model.loss(batch_edges[:, 0], batch_edges[:,1])
             curvature_loss = embedding_model.curvature_loss(batch_walks)
-            loss += self.args.cur_weight * curvature_loss
+            loss = self.args.cur_weight * curvature_loss
             loss.backward()
             optimizer.step()
             print("train_loss=", "{:.5f}".format(loss.item()), "curvature_loss=", "{:.5f}".format(curvature_loss.item()),
