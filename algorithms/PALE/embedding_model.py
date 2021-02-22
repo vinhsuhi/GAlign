@@ -56,7 +56,7 @@ class PaleEmbedding(nn.Module):
 
     def curvature_loss(self, walks):
         all_emb = self.node_embedding(torch.LongTensor(np.array(range(self.num_nodes))).cuda())
-        all_emb[0] = self.fixed_data
+        # all_emb[0] = self.fixed_data
         walks_emb = all_emb[walks] # bs x wl x emb_dim
         target = walks_emb[:, 1:]
         source = walks_emb[:, :-1]

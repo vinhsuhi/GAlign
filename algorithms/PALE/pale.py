@@ -76,6 +76,7 @@ class PALE(NetworkAlignmentModel):
         # walks = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]]
         # walks = [[0, 1, 2, 3], [1, 2, 3, 4], [3, 4, 5, 6], [5, 6, 7, 8], [6, 7, 8, 9], [9, 10, 11, 12], [12, 13, 14, 15], [13, ]]
         walks = [[(i + j) % 18 for j in range(4)] for i in range(18 - 4)]
+        # import
         # walks += [[0, 1, 2, 3] for i in range(20)]
         # walks += [[17, 0, 1, 2] for i in range(20)]
         # walks += [[16, 17, 0, 1] for i in range(20)]
