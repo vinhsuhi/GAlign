@@ -200,7 +200,6 @@ def parse_args():
     parser_GAlign.add_argument('--log', action="store_true", help="Just to print loss")
     parser_GAlign.add_argument('--invest', action="store_true", help="To do some statistics")
     parser_GAlign.add_argument('--input_dim', default=100, help="Just ignore it")
-    parser_GAlign.add_argument('--train_dict')
     parser_GAlign.add_argument('--alpha0', type=float, default=1)
     parser_GAlign.add_argument('--alpha1', type=float, default=1)
     parser_GAlign.add_argument('--alpha2', type=float, default=1)
@@ -267,7 +266,7 @@ if __name__ == '__main__':
 
     S = model.align()
     print("-"*100)
-    acc, MAP, top5, top10 = get_statistics(S, groundtruth, use_greedy_match=True, get_all_metric=True)
+    acc, MAP, top5, top10 = get_statistics(S, groundtruth, use_greedy_match=False, get_all_metric=True)
     print("Accuracy: {:.4f}".format(acc))
     print("MAP: {:.4f}".format(MAP))
     print("Precision_5: {:.4f}".format(top5))
