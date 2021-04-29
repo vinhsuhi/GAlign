@@ -203,8 +203,6 @@ def parse_args():
     parser_GAlign.add_argument('--alpha0', type=float, default=1)
     parser_GAlign.add_argument('--alpha1', type=float, default=1)
     parser_GAlign.add_argument('--alpha2', type=float, default=1)
-    parser_GAlign.add_argument('--source_embedding')
-    parser_GAlign.add_argument('--target_embedding')
     parser_GAlign.add_argument('--noise_level', type=float, default=0.01)
 
     # refinement
